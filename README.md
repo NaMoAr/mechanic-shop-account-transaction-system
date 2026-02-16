@@ -47,32 +47,82 @@ This project provides a console-based operations system for a mechanic shop. It 
 
 ## Setup
 
-### 1) Compile
+### 1) Install PostgreSQL and ensure tools are available
+
+Install PostgreSQL using your OS package manager, then confirm:
+
+```bash
+psql --version
+createdb --version
+```
+
+### 2) Start PostgreSQL server
+
+Start your local PostgreSQL service and ensure it is accepting connections on your configured host/port.
+
+### 3) Create database and schema
+
+```bash
+createdb carRepair
+psql carRepair < sql/schema.sql
+```
+
+### 4) Optional: load sample data (recommended for first run)
+
+From the project root:
+
+```bash
+psql carRepair < sql/seed.sql
+```
+
+You can skip this step to start with an empty database.
+
+### 5) Build
 
 ```bash
 javac -cp .:postgresql-42.2.23.jar src/*.java -d bin
 ```
 
-### 2) Configure DB Credentials
-
-Use environment variables (recommended):
+### 6) Configure app environment
 
 ```bash
-export MECHANICSHOP_DB_NAME=carRepair
-export MECHANICSHOP_DB_PORT=5432
-export MECHANICSHOP_DB_USER=postgres
-export MECHANICSHOP_DB_PASSWORD=your_password_here
+export MECHANICSHOP_DB_NAME="carRepair"
+export MECHANICSHOP_DB_PORT="5432"
+export MECHANICSHOP_DB_USER="<your_postgres_role>"
+export MECHANICSHOP_DB_PASSWORD="<your_postgres_password>"
 ```
 
-Or pass values as CLI args:
-
-```bash
-java -cp .:postgresql-42.2.23.jar:bin MechanicShop \
-  --db-name carRepair --db-port 5432 --db-user postgres --db-password your_password_here
-```
-
-### 3) Run
+### 7) Run
 
 ```bash
 java -cp .:postgresql-42.2.23.jar:bin MechanicShop
 ```
+
+## Startup Modes
+
+- `Seeded mode` (recommended): run `psql carRepair < sql/seed.sql` and explore reports/ledger immediately.
+- `Empty mode`: run only `sql/schema.sql`, then add data from the app menu (`AddCustomer`, `AddMechanic`, `AddCar`, `AddOwnership`).
+
+## Legacy SQL Files
+
+The original files are kept for reference (`sql/create.sql`, `sql/Mycreate.txt`), but the app is aligned with:
+
+- `sql/schema.sql` for schema creation
+- `sql/seed.sql` for sample data loading
+
+## If `COPY` paths fail in legacy scripts
+
+```bash
+sed '/^COPY Customer/,$d' sql/create.sql | psql carRepair
+```
+
+## Troubleshooting
+
+- `zsh: command not found: psql` or `createdb`:
+  - PostgreSQL binaries are not on PATH. Add PostgreSQL `bin` directory to PATH.
+- `FATAL: role "postgres" does not exist`:
+  - Use an existing PostgreSQL role in `MECHANICSHOP_DB_USER`, or create the role first.
+- `FATAL: database "carRepair" does not exist`:
+  - Run `createdb carRepair`.
+- `Connection to localhost:5432 refused`:
+  - PostgreSQL service is not running or listening on that port. Start the service and verify host/port.
